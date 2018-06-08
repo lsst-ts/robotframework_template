@@ -1,0 +1,198 @@
+Before installing Robotframework
+================================
+Install Java
+------------
+	Open a terminal window
+	check version of java installed
+	java -version
+	if it asks to install, say yes
+	else java version should be v1.6 or higher
+
+	add the following to your .bash_profile
+	export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home
+
+
+Installing RobotFramework and Libraries
+=======================================
+Robot Framework is a GitHub project.  Navigate to the following website for installation instructions.
+https://github.com/robotframework/robotframework
+
+It is assumed that all Repositories are stored locally in a trunk/ directory off the home folder, i.e. $HOME/trunk
+
+Installing RobotFramework IDE
+-----------------------------
+If desired, Robot Framework has its own IDE, called RIDE.  Installation instructions can be found at
+https://github.com/robotframework/RIDE/wiki/Installation-Instructions
+
+Current LSST QA forgoes use of this tool in favor of using a generic text editor, like VI. 
+
+
+Installing RobotFramework SSHLibrary
+------------------------------------
+LSST QA makes heavy use of the SSHLibrary.  This must be installed for the tests to run successfully.
+Follow the instructions for installing SSHLibrary at
+https://github.com/robotframework/SSHLibrary
+
+
+Searching for Additional Libraries
+------------------------------------
+Other RobotFramework libraries:
+These are not required at this time, but may be useful in the future.
+
+Library listing:
+http://robotframework.org/#libraries
+
+HTTPLibrary
+-----------
+homepage:
+https://github.com/peritus/robotframework-httplibrary
+git repo:
+git clone https://github.com/peritus/robotframework-httplibrary.git
+
+RequestsLibrary
+---------------
+homepage:
+https://github.com/bulkan/robotframework-requests
+git repo:
+git://github.com/bulkan/robotframework-requests.git
+
+
+Use pip to upgrade installed packages:
+-----------------------------------------
+sudo pip install --upgrade <package_name>
+i.e.: 
+> sudo pip install -U robotframework
+OR
+> sudo pip install -U robotframework-SSHLibrary
+
+
+Python installed versions
+=========================
+Pip can return all of the installed versions by:
+> pip freeze
+
+
+Running RobotFramework Tests
+============================
+To actually run the regression tests you will also need:
+1.  UNIX utilities such as awk, sed, cut, grep, head, and tail.
+2.  Create the <project>_Vars.txt and <project>_regression.sh files to $HOME/bin
+
+
+
+The <project>_Vars.txt file is a variables file for the server you are wishing to run against and your current environment.
+Below is a template for the SAL_Vars.txt that can be copied and edited appropriately:
+
+
+#  Arguments file for testing the SAL
+#  Output directory
+-d /Users/<username>/Reports/SAL_RegressionTests
+
+#  Specify tags to NOT run
+-e skipped
+-e TSS*
+
+# Specify non-critical failures
+--noncritical TSS
+
+# Dry run mode
+#--dryrun
+
+#  Redefine default variables
+--variable ContInt:false
+--variable UserName:<username>
+--variable PassWord:<passwd>
+
+--variable KeyFile:<path_to_keyfile>
+--variable Host:<hostIP>
+--variable SALInstall:/opt/sal
+
+--variable OpenspliceVersion:6.7.170523OSS
+--variable OpenspliceDate:2017-07-31
+
+--variable SALVersion:3.6.0
+####
+
+The <project>_regression.sh file is a control script that runs the various test suites in a controllable order, and then
+processes the individual results into one combined result set.  Below is a template for sal_regression.sh:
+
+
+#!/bin/bash
+
+# Clean out results directory.
+echo "=== Clearing previous test results. ==="
+rm -r $HOME/Reports/SAL_RegressionTests
+
+# Move to trunk/robotframework_SAL to run the tests.
+echo "cd $HOME/trunk/robotframework_SAL"
+cd $HOME/trunk/robotframework_SAL
+
+# Run the tests.
+echo "=== Running the regression. ==="
+robot -d $HOME/Reports/SAL_RegressionTests -A $HOME/bin/SAL_Vars.txt -A SalGen_Test.list
+robot -d $HOME/Reports/SAL_RegressionTests -A $HOME/bin/SAL_Vars.txt -A CppTelemetry_Tests.list
+robot -d $HOME/Reports/SAL_RegressionTests -A $HOME/bin/SAL_Vars.txt -A CppStateMachine_Tests.list
+robot -d $HOME/Reports/SAL_RegressionTests -A $HOME/bin/SAL_Vars.txt -A CppCommands_Tests.list
+robot -d $HOME/Reports/SAL_RegressionTests -A $HOME/bin/SAL_Vars.txt -A CppEvents_Tests.list
+robot -d $HOME/Reports/SAL_RegressionTests -A $HOME/bin/SAL_Vars.txt -A JavaTelemetry_Tests.list
+robot -d $HOME/Reports/SAL_RegressionTests -A $HOME/bin/SAL_Vars.txt -A JavaStateMachine_Tests.list
+robot -d $HOME/Reports/SAL_RegressionTests -A $HOME/bin/SAL_Vars.txt -A JavaCommands_Tests.list
+robot -d $HOME/Reports/SAL_RegressionTests -A $HOME/bin/SAL_Vars.txt -A JavaEvents_Tests.list
+robot -d $HOME/Reports/SAL_RegressionTests -A $HOME/bin/SAL_Vars.txt -A PythonTelemetry_Tests.list
+robot -d $HOME/Reports/SAL_RegressionTests -A $HOME/bin/SAL_Vars.txt -A PythonStateMachine_Tests.list
+robot -d $HOME/Reports/SAL_RegressionTests -A $HOME/bin/SAL_Vars.txt -A PythonCommands_Tests.list
+robot -d $HOME/Reports/SAL_RegressionTests -A $HOME/bin/SAL_Vars.txt -A PythonEvents_Tests.list
+
+# Move to Reports/SAL_RegressionTests to generate reports.
+echo "cd $HOME/Reports/SAL_RegressionTests"
+cd $HOME/Reports/SAL_RegressionTests
+
+# Check for output file existence.
+declare -a outputs=(SALGENERATOR.xml CppTelemetry.xml CppStateMachine.xml CppCommands.xml CppEvents.xml JavaTelemetry.xml JavaStateMachine.xml JavaCommands.xml JavaEvents.xml PythonTelemetry.xml PythonStateMachine.xml PythonCommands.xml PythonEvents.xml)
+i=0
+for item in "${outputs[@]}"; do
+    if test -f "$item"; then array[$i]=$item; else echo "$item does not exist!";fi
+    (( i++ ))
+done
+
+# Generate reports.
+echo "=== Generating reports with ${array[@]} ==="
+rebot --name SAL_Regression -o regression_output.xml -l regression_log.html -r regression_report.html --noncritical TSS* ${array[@]}
+####
+
+
+Sample command line to run individual automated test suites
+===========================================================
+Navigate to $HOME/trunk/robotframework_SAL (location of robotframework_SAL from checked out git repo).
+> robot -A /path/to/SAL_Vars.txt SALGEN/Archiver_salgenerator.robot
+
+Sample command line to run a block of test suites
+=================================================
+Navigate to $HOME/trunk/robotframework_SAL (location of robotframework_SAL from checked out git repo).
+> robot -A /path/to/SAL_Vars.txt -A PythonTelemetry_Tests.list
+
+Sample command line to run the full Regression
+==============================================
+Navigate to the $HOME/bin directory, or wherever the sal_regression.sh script is located, then
+> ./bin/sal_regression.sh
+
+
+Additional Usage instructions
+=============================
+The robotframework_SAL/ root directory contains multiple *_Tests.list files.  These are simply lists of related test suites that aid in running the regression and reporting the results,
+both locally and in Jenkins.
+
+Version.robot is a simple test suite to verify SAL and OpenSplice versions are correct.  This is an excellent test suite to run to verify installation and operation.
+
+The common.robot file is a custom library, of sorts, that contains common keywords (currently, only one) used by all, or most, other test suites.
+
+Global_Vars.txt contains variables, some with default values, used throughout the test suites.  Use this in conjunction with $HOME/bin/SAL_Vars.txt to control variables, such as
+versions, that on commonly used but can change with time or location.  IMPORTANT NOTE: Values in SAL_Vars.txt will supersede those in Global_Vars.txt.
+
+The scripts/ directory contains utilities to automatically generate the test suites and test lists, as manual maintenence would be next to impossible.
+
+Finally, the test suites themselves are stored and organized in the various ALL_CAPS directories.
+
+
+
+

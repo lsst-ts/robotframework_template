@@ -1,0 +1,22 @@
+To generate the tests, simply invoke the Generate_Tests.py Python script.
+
+> python Generate_Tests.py -c <name of csc>
+
+> python Generate_Tests.py -h
+usage: Generate_Tests.py [-h] -c CSC
+
+Determine which CSC to generate State Machine tests.
+
+optional arguments:
+  -h, --help         show this help message and exit
+  -c CSC, --csc CSC  For which CSC do you want to generate tests?
+
+
+The process will create a folder in the same directory as the script called robotframework_<csc> and populate it with several files.
+
+The m1m3_StateMachine_Tests.robot file is the actual test suite.
+The GlobalVars.robot file contains configuration values.
+The <csc>_LocalVars.txt file auguments those values and includes runtime settings.  NOTE: This file must be editied prior to running the tests.
+The common.robot file is a resource file containing commonly used keywords.  This will prove useful as the tests are expanded.
+The Library/<csc>_SAL.py is a library that instantiates the SAL Python APIs into a Robot-Framework library, basically turning the SAL APIs into RF Keywords.
+Finally, the RobotFramework_Install_Setup_Usage_Instructions.txt contains instructions for the installation, setup and usage of Robot-Framework.
