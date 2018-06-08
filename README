@@ -14,7 +14,7 @@ optional arguments:
 
 The process will create a folder in the same directory as the script called robotframework_<csc> and populate it with several files.
 
-The m1m3_StateMachine_Tests.robot file is the actual test suite.
+The <csc>_StateMachine_Tests.robot file is the actual test suite.
 The GlobalVars.robot file contains configuration values.
 The <csc>_LocalVars.txt file auguments those values and includes runtime settings.  NOTE: This file must be editied prior to running the tests.
 The common.robot file is a resource file containing commonly used keywords.  This will prove useful as the tests are expanded.
